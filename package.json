@@ -1,15 +1,19 @@
 {
   "name": "tree-sitter-lucid",
-  "version": "1.0.0",
-  "description": "tree-sitter configuration for Lucid",
+  "version": "0.0.1",
+  "description": "Lucid grammar for Tree-sitter",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sgatev/tree-sitter-lucid"
+  },
   "main": "index.js",
   "types": "bindings/node",
   "scripts": {
     "install": "node-gyp-build",
     "prebuildify": "prebuildify --napi --strip"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Stanislav Gatev <sg@sgatev.com> (https://github.com/sgatev)",
+  "license": "MIT",
   "devDependencies": {
     "tree-sitter-cli": "^0.22.2",
     "prebuildify": "^6.0.0"
