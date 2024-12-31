@@ -36,20 +36,5 @@
     "tree_sitter": {
       "optional": true
     }
-  },
-  "tree-sitter": [
-    {
-      "scope": "source.lucid",
-      "file-types": [
-        "lu"
-      ],
-      "injection-regex": "lucid",
-      "highlights": [
-        "queries/highlights.scm"
-      ],
-      "tags": [
-        "queries/tags.scm"
-      ]
-    }
-  ]
+  }
 }

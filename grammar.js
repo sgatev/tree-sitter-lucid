@@ -4,6 +4,8 @@ module.exports = grammar({
   rules: {
     source_file: $ => repeat($.func),
 
+    comment: _ => token(seq('#', /.*/)),
+
     func: $ => seq(
       'let',
       $.ident,
@@ -127,7 +129,10 @@ module.exports = grammar({
     array_index: $ => choice(
       seq($.ident, '[', $.expr, ']')
     )
-  }
+  },
+  extras: $ => [
+    $.comment,
+  ],
 });
 
 function commaSeparatedRepeat(rule) {

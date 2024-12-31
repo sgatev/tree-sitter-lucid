@@ -1,0 +1,43 @@
+{
+  "grammars": [
+    {
+      "name": "lucid",
+      "camelcase": "Lucid",
+      "scope": "source.lucid",
+      "path": ".",
+      "file-types": [
+        "lu"
+      ],
+      "highlights": [
+        "queries/highlights.scm"
+      ],
+      "tags": [
+        "queries/tags.scm"
+      ],
+      "injection-regex": "lucid"
+    }
+  ],
+  "metadata": {
+    "version": "0.0.1",
+    "license": "MIT",
+    "description": "Lucid grammar for Tree-sitter",
+    "authors": [
+      {
+        "name": "Stanislav Gatev",
+        "email": "sg@sgatev.com",
+        "url": "https://github.com/sgatev"
+      }
+    ],
+    "links": {
+      "repository": "https://github.com/sgatev/tree-sitter-lucid"
+    }
+  },
+  "bindings": {
+    "c": true,
+    "go": true,
+    "node": true,
+    "python": true,
+    "rust": true,
+    "swift": true
+  }
+}
