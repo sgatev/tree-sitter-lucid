@@ -1,140 +1,190 @@
+/**
+ * @file Lucid grammar for tree-sitter
+ * @license MIT
+ */
+
+/// <reference types="tree-sitter-cli/dsl" />
+
+// Loosest first, as in the language: `or` gives way to `and`, `and` to the
+// comparisons, and those to the arithmetic. `!` binds tighter than all of
+// them, because it takes one element rather than an expression.
+const PREC = {
+  or: 1,
+  and: 2,
+  compare: 3,
+  add: 4,
+  multiply: 5,
+  not: 6,
+  // A suffix binds tightest of all: with the commas of an argument list
+  // optional, `f(a (b))` could be two arguments or one call, and the
+  // language reads a `(` after a name as the call it would be.
+  suffix: 7,
+};
+
 module.exports = grammar({
   name: 'lucid',
 
+  // Keywords are not reserved in Lucid: they are identifiers the parser
+  // recognises where one is expected. Extracting them from `ident` is what
+  // keeps `android` one identifier rather than `and` and `roid`.
+  word: $ => $.ident,
+
+  extras: $ => [/\s/, $.comment],
+
   rules: {
-    source_file: $ => repeat($.func),
+    source_file: $ => repeat($._definition),
 
     comment: _ => token(seq('#', /.*/)),
 
-    func: $ => seq(
-      'let',
-      $.ident,
+    _definition: $ => choice($.func_def, $.type_def),
+
+    func_def: $ => seq(
+      optional('comp'),
+      'fun',
+      field('name', $.ident),
+      $.params,
+      ':',
+      field('result', $.type),
+      field('body', $.block),
+    ),
+
+    // A type definition is the one place `Type` is a word of its own.
+    type_def: $ => seq(
+      optional('comp'),
+      'val',
+      field('name', $.ident),
+      ':',
+      'Type',
       '=',
-      '(',
-      commaSeparatedRepeat(
-        seq($.ident, ':', $.type)
-      ),
-      ')',
-      '->',
-      $.type,
-      $.body
+      $.params,
     ),
 
-    ident: $ => /[a-zA-Z][a-zA-Z0-9]*/,
+    // The commas are optional, as they are in the language.
+    params: $ => seq('(', repeat(seq($.param, optional(','))), ')'),
 
-    type: $ => choice(
-      $.ident,
-      seq($.ident, '[', $.number, ']')
-    ),
+    param: $ => seq(field('name', $.ident), ':', field('type', $.type)),
 
-    body: $ => seq(
-      '{',
-      repeat($.stmt),
-      '}'
-    ),
+    type: $ => seq($.ident, optional(seq('[', $.number, ']'))),
 
-    stmt: $ => choice(
+    block: $ => seq('{', repeat($._statement), '}'),
+
+    _statement: $ => choice(
+      $.var_decl_stmt,
+      $.assign_stmt,
       $.if_stmt,
+      $.loop_stmt,
+      $.break_stmt,
       $.return_stmt,
       $.do_stmt,
-      $.break_stmt,
-      $.loop_stmt,
-      $.var_decl_stmt,
-      $.var_assign_stmt
-    ),
-
-    if_stmt: $ => seq(
-      'if',
-      $.expr,
-      $.body,
-      repeat(seq(
-        'else',
-        optional(
-          seq('if', $.expr)
-        ),
-        $.body
-      ))
-    ),
-
-    expr: $ => choice(
-      $.ident,
-      $.number,
-      $.string,
-      $.binary_expr,
-      $.func_call,
-      $.array_index
-    ),
-
-    number: $ => /([1-9][0-9]*|0)/,
-
-    string: $ => /".*"/,
-
-    binary_expr: $ => prec.left(seq(
-      $.expr,
-      $.binary_op,
-      $.expr
-    )),
-
-    binary_op: $ => choice(
-      '<',
-      '>',
-      '+',
-      '-',
-      '%',
-      '=='
-    ),
-
-    return_stmt: $ => seq(
-      'return',
-      $.expr
-    ),
-
-    do_stmt: $ => seq(
-      'do',
-      $.expr
-    ),
-
-    break_stmt: $ => seq('break'),
-
-    loop_stmt: $ => seq(
-      'loop',
-      $.body
-    ),
-
-    func_call: $ => seq(
-      $.ident,
-      '(',
-      commaSeparatedRepeat($.expr),
-      ')'
     ),
 
     var_decl_stmt: $ => seq(
-      'let',
-      $.ident,
+      optional('comp'),
+      'val',
+      field('name', $.ident),
       ':',
-      $.type,
-      '=',
-      $.expr
+      field('type', $.type),
+      optional(seq('=', field('value', $._expression))),
     ),
 
-    var_assign_stmt: $ => seq(
-      choice(
-        $.ident,
-        $.array_index
-      ),
+    // An assignment is told from a declaration by the `&` that opens it.
+    assign_stmt: $ => seq(
+      '&',
+      field('target', $._assign_target),
       '=',
-      $.expr
+      field('value', $._expression),
     ),
 
-    array_index: $ => choice(
-      seq($.ident, '[', $.expr, ']')
-    )
+    _assign_target: $ => choice($.ident, $.index_expr, $.field_expr),
+
+    if_stmt: $ => seq(
+      'if',
+      field('condition', $._expression),
+      field('consequence', $.block),
+      optional(seq('else', field('alternative', choice($.if_stmt, $.block)))),
+    ),
+
+    loop_stmt: $ => seq('loop', $.block),
+
+    break_stmt: _ => 'break',
+
+    return_stmt: $ => seq('return', field('value', $._expression)),
+
+    do_stmt: $ => seq('do', field('value', $._expression)),
+
+    _expression: $ => choice(
+      $.ident,
+      $.number,
+      $.string,
+      $.bool,
+      $.call_expr,
+      $.index_expr,
+      $.field_expr,
+      $.unary_expr,
+      $.binary_expr,
+      $.paren_expr,
+    ),
+
+    paren_expr: $ => seq('(', $._expression, ')'),
+
+    // The commas are optional here too.
+    call_expr: $ => prec(PREC.suffix, seq(
+      field('function', $.ident),
+      '(',
+      repeat(seq($._expression, optional(','))),
+      ')',
+    )),
+
+    // An index and a field access take what came before them as their base,
+    // and as many of them follow as are written.
+    index_expr: $ => prec.left(PREC.suffix, seq(
+      field('base', $._expression),
+      '[',
+      field('index', $._expression),
+      ']',
+    )),
+
+    field_expr: $ => prec.left(PREC.suffix, seq(
+      field('base', $._expression),
+      '.',
+      field('field', $.ident),
+    )),
+
+    unary_expr: $ => prec(PREC.not, seq(
+      field('operator', '!'),
+      field('operand', $._expression),
+    )),
+
+    binary_expr: $ => choice(
+      ...[
+        ['or', PREC.or],
+        ['and', PREC.and],
+        ['==', PREC.compare],
+        ['!=', PREC.compare],
+        ['>=', PREC.compare],
+        ['<=', PREC.compare],
+        ['>', PREC.compare],
+        ['<', PREC.compare],
+        ['+', PREC.add],
+        ['-', PREC.add],
+        ['*', PREC.multiply],
+        ['/', PREC.multiply],
+        ['%', PREC.multiply],
+      ].map(([operator, precedence]) => prec.left(precedence, seq(
+        field('left', $._expression),
+        field('operator', operator),
+        field('right', $._expression),
+      ))),
+    ),
+
+    bool: _ => choice('true', 'false'),
+
+    ident: _ => /[a-zA-Z_][a-zA-Z_0-9]*/,
+
+    number: _ => /[0-9]+/,
+
+    // A string runs to the next quote, which it therefore cannot hold, and
+    // may run across lines.
+    string: _ => /"[^"]*"/,
   },
-  extras: $ => [
-    $.comment,
-  ],
 });
-
-function commaSeparatedRepeat(rule) {
-  return optional(seq(rule, repeat(seq(',', rule))));
-}
