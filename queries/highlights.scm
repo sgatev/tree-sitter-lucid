@@ -4,8 +4,13 @@
   "comp"
   "fun"
   "val"
+  "mut"
   "Type"
 ] @keyword
+
+; On a declaration or a parameter the mark is a node of its own, so that a
+; declaration says in its tree whether a write can reach it.
+(mutable_specifier) @keyword
 
 [
   "if"
@@ -37,7 +42,6 @@
   "/"
   "%"
   "!"
-  "&"
 ] @operator
 
 [
@@ -59,6 +63,7 @@
 (call_expr function: (ident) @function.call)
 
 (param name: (ident) @variable.parameter)
+(field_decl name: (ident) @variable.member)
 (var_decl_stmt name: (ident) @variable)
 (type_def name: (ident) @type)
 

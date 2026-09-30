@@ -6,20 +6,26 @@
 /// <reference types="tree-sitter-cli/dsl" />
 
 // Loosest first, as in the language: `or` gives way to `and`, `and` to the
-// comparisons, and those to the arithmetic. `!` binds tighter than all of
-// them, because it takes one element rather than an expression.
+// comparisons, and those to the arithmetic. `!` and `comp` bind tighter than
+// all of them, because each takes one element rather than an expression.
 const PREC = {
   or: 1,
   and: 2,
   compare: 3,
   add: 4,
   multiply: 5,
-  not: 6,
+  prefix: 6,
   // A suffix binds tightest of all: with the commas of an argument list
   // optional, `f(a (b))` could be two arguments or one call, and the
   // language reads a `(` after a name as the call it would be.
   suffix: 7,
 };
+
+// A parenthesised list whose commas are optional, as they are in the
+// language.
+function commaList(item) {
+  return seq('(', repeat(seq(item, optional(','))), ')');
+}
 
 module.exports = grammar({
   name: 'lucid',
@@ -56,13 +62,29 @@ module.exports = grammar({
       ':',
       'Type',
       '=',
-      $.params,
+      $.fields,
     ),
 
     // The commas are optional, as they are in the language.
-    params: $ => seq('(', repeat(seq($.param, optional(','))), ')'),
+    params: $ => commaList($.param),
 
-    param: $ => seq(field('name', $.ident), ':', field('type', $.type)),
+    // A `mut` says the body may write to the parameter. What is written is
+    // the function's own copy, so it says nothing to the caller.
+    param: $ => seq(
+      optional($.mutable_specifier),
+      field('name', $.ident),
+      ':',
+      field('type', $.type),
+    ),
+
+    fields: $ => commaList($.field_decl),
+
+    // A field takes no `mut`: it is not a binding anything writes through,
+    // and a write to one is allowed by the `mut` on what holds the tuple.
+    field_decl: $ => seq(field('name', $.ident), ':', field('type', $.type)),
+
+    // The mark that says a write can reach what it stands on.
+    mutable_specifier: _ => 'mut',
 
     type: $ => seq($.ident, optional(seq('[', $.number, ']'))),
 
@@ -79,7 +101,7 @@ module.exports = grammar({
     ),
 
     var_decl_stmt: $ => seq(
-      optional('comp'),
+      optional($.mutable_specifier),
       'val',
       field('name', $.ident),
       ':',
@@ -87,9 +109,10 @@ module.exports = grammar({
       optional(seq('=', field('value', $._expression))),
     ),
 
-    // An assignment is told from a declaration by the `&` that opens it.
+    // An assignment opens with the same `mut` the declaration of what it
+    // writes carries. A `val` after it would make it a declaration instead.
     assign_stmt: $ => seq(
-      '&',
+      'mut',
       field('target', $._assign_target),
       '=',
       field('value', $._expression),
@@ -121,6 +144,7 @@ module.exports = grammar({
       $.index_expr,
       $.field_expr,
       $.unary_expr,
+      $.comp_expr,
       $.binary_expr,
       $.paren_expr,
     ),
@@ -150,9 +174,17 @@ module.exports = grammar({
       field('field', $.ident),
     )),
 
-    unary_expr: $ => prec(PREC.not, seq(
+    unary_expr: $ => prec(PREC.prefix, seq(
       field('operator', '!'),
       field('operand', $._expression),
+    )),
+
+    // Asks for the value of what follows it during compilation. Like `!`, it
+    // takes the one element after it, so `comp f() + n` adds at run time
+    // what `f` came to while compiling.
+    comp_expr: $ => prec(PREC.prefix, seq(
+      'comp',
+      field('value', $._expression),
     )),
 
     binary_expr: $ => choice(

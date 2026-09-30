@@ -53,6 +53,89 @@ comp fun square(n: Int32): Int32 {
           right: (ident))))))
 
 ====================
+Mutable parameters
+====================
+
+fun gcd(mut a: Int32, b: Int32): Int32 {
+  return a
+}
+
+---
+
+(source_file
+  (func_def
+    name: (ident)
+    (params
+      (param
+        (mutable_specifier)
+        name: (ident)
+        type: (type
+          (ident)))
+      (param
+        name: (ident)
+        type: (type
+          (ident))))
+    result: (type
+      (ident))
+    body: (block
+      (return_stmt
+        value: (ident)))))
+
+====================
+Compile time expressions
+====================
+
+fun main(): Int32 {
+  val a: Int32 = comp f() + n
+  val b: Int32 = comp (f() + g())
+  val c: Int32 = comp p.x
+  return comp comp f()
+}
+
+---
+
+(source_file
+  (func_def
+    name: (ident)
+    (params)
+    result: (type
+      (ident))
+    body: (block
+      (var_decl_stmt
+        name: (ident)
+        type: (type
+          (ident))
+        value: (binary_expr
+          left: (comp_expr
+            value: (call_expr
+              function: (ident)))
+          right: (ident)))
+      (var_decl_stmt
+        name: (ident)
+        type: (type
+          (ident))
+        value: (comp_expr
+          value: (paren_expr
+            (binary_expr
+              left: (call_expr
+                function: (ident))
+              right: (call_expr
+                function: (ident))))))
+      (var_decl_stmt
+        name: (ident)
+        type: (type
+          (ident))
+        value: (comp_expr
+          value: (field_expr
+            base: (ident)
+            field: (ident))))
+      (return_stmt
+        value: (comp_expr
+          value: (comp_expr
+            value: (call_expr
+              function: (ident))))))))
+
+====================
 Type definition
 ====================
 
@@ -63,12 +146,12 @@ val Point: Type = (x: Int32, y: Int32)
 (source_file
   (type_def
     name: (ident)
-    (params
-      (param
+    (fields
+      (field_decl
         name: (ident)
         type: (type
           (ident)))
-      (param
+      (field_decl
         name: (ident)
         type: (type
           (ident))))))
@@ -79,8 +162,8 @@ Variable declaration
 
 fun main(): Int32 {
   val n: Int32 = 21
-  val buffer: Int32[101]
-  comp val c: Int32 = 3
+  mut val buffer: Int32[101]
+  mut val c: Int32 = 3
   return n
 }
 
@@ -99,11 +182,13 @@ fun main(): Int32 {
           (ident))
         value: (number))
       (var_decl_stmt
+        (mutable_specifier)
         name: (ident)
         type: (type
           (ident)
           (number)))
       (var_decl_stmt
+        (mutable_specifier)
         name: (ident)
         type: (type
           (ident))
@@ -116,11 +201,11 @@ Assignment
 ====================
 
 fun main(): Int32 {
-  &n = n + 1
-  &buffer[col] = 0
-  &p.x = 3
-  &ps[i].x = 4
-  &q.p.x = 5
+  mut n = n + 1
+  mut buffer[col] = 0
+  mut p.x = 3
+  mut ps[i].x = 4
+  mut q.p.x = 5
   return 0
 }
 
@@ -357,3 +442,36 @@ fun main(): Bool {
         value: (string))
       (return_stmt
         value: (bool)))))
+
+====================
+A comp declaration is no longer a statement
+:error
+====================
+
+fun main(): Int32 {
+  comp val c: Int32 = 3
+  return c
+}
+
+---
+
+====================
+An assignment no longer opens with an ampersand
+:error
+====================
+
+fun main(): Int32 {
+  &n = 1
+  return n
+}
+
+---
+
+====================
+A field takes no mut
+:error
+====================
+
+val P: Type = (mut x: Int32)
+
+---

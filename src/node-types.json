@@ -38,6 +38,10 @@
             "named": true
           },
           {
+            "type": "comp_expr",
+            "named": true
+          },
+          {
             "type": "field_expr",
             "named": true
           },
@@ -87,6 +91,10 @@
           },
           {
             "type": "call_expr",
+            "named": true
+          },
+          {
+            "type": "comp_expr",
             "named": true
           },
           {
@@ -191,6 +199,10 @@
           },
           {
             "type": "call_expr",
+            "named": true
+          },
+          {
+            "type": "comp_expr",
             "named": true
           },
           {
@@ -301,6 +313,10 @@
           "named": true
         },
         {
+          "type": "comp_expr",
+          "named": true
+        },
+        {
           "type": "field_expr",
           "named": true
         },
@@ -332,7 +348,7 @@
     }
   },
   {
-    "type": "do_stmt",
+    "type": "comp_expr",
     "named": true,
     "fields": {
       "value": {
@@ -349,6 +365,10 @@
           },
           {
             "type": "call_expr",
+            "named": true
+          },
+          {
+            "type": "comp_expr",
             "named": true
           },
           {
@@ -384,6 +404,88 @@
     }
   },
   {
+    "type": "do_stmt",
+    "named": true,
+    "fields": {
+      "value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "binary_expr",
+            "named": true
+          },
+          {
+            "type": "bool",
+            "named": true
+          },
+          {
+            "type": "call_expr",
+            "named": true
+          },
+          {
+            "type": "comp_expr",
+            "named": true
+          },
+          {
+            "type": "field_expr",
+            "named": true
+          },
+          {
+            "type": "ident",
+            "named": true
+          },
+          {
+            "type": "index_expr",
+            "named": true
+          },
+          {
+            "type": "number",
+            "named": true
+          },
+          {
+            "type": "paren_expr",
+            "named": true
+          },
+          {
+            "type": "string",
+            "named": true
+          },
+          {
+            "type": "unary_expr",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "field_decl",
+    "named": true,
+    "fields": {
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "ident",
+            "named": true
+          }
+        ]
+      },
+      "type": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "type",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "field_expr",
     "named": true,
     "fields": {
@@ -401,6 +503,10 @@
           },
           {
             "type": "call_expr",
+            "named": true
+          },
+          {
+            "type": "comp_expr",
             "named": true
           },
           {
@@ -443,6 +549,21 @@
           }
         ]
       }
+    }
+  },
+  {
+    "type": "fields",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "field_decl",
+          "named": true
+        }
+      ]
     }
   },
   {
@@ -526,6 +647,10 @@
             "named": true
           },
           {
+            "type": "comp_expr",
+            "named": true
+          },
+          {
             "type": "field_expr",
             "named": true
           },
@@ -588,6 +713,10 @@
             "named": true
           },
           {
+            "type": "comp_expr",
+            "named": true
+          },
+          {
             "type": "field_expr",
             "named": true
           },
@@ -631,6 +760,10 @@
           },
           {
             "type": "call_expr",
+            "named": true
+          },
+          {
+            "type": "comp_expr",
             "named": true
           },
           {
@@ -681,6 +814,11 @@
     }
   },
   {
+    "type": "mutable_specifier",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "param",
     "named": true,
     "fields": {
@@ -704,6 +842,16 @@
           }
         ]
       }
+    },
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "mutable_specifier",
+          "named": true
+        }
+      ]
     }
   },
   {
@@ -739,6 +887,10 @@
         },
         {
           "type": "call_expr",
+          "named": true
+        },
+        {
+          "type": "comp_expr",
           "named": true
         },
         {
@@ -790,6 +942,10 @@
           },
           {
             "type": "call_expr",
+            "named": true
+          },
+          {
+            "type": "comp_expr",
             "named": true
           },
           {
@@ -883,7 +1039,7 @@
       "required": true,
       "types": [
         {
-          "type": "params",
+          "type": "fields",
           "named": true
         }
       ]
@@ -907,6 +1063,10 @@
           },
           {
             "type": "call_expr",
+            "named": true
+          },
+          {
+            "type": "comp_expr",
             "named": true
           },
           {
@@ -992,6 +1152,10 @@
             "named": true
           },
           {
+            "type": "comp_expr",
+            "named": true
+          },
+          {
             "type": "field_expr",
             "named": true
           },
@@ -1021,6 +1185,16 @@
           }
         ]
       }
+    },
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "mutable_specifier",
+          "named": true
+        }
+      ]
     }
   },
   {
@@ -1033,10 +1207,6 @@
   },
   {
     "type": "%",
-    "named": false
-  },
-  {
-    "type": "&",
     "named": false
   },
   {
@@ -1154,6 +1324,10 @@
   },
   {
     "type": "loop",
+    "named": false
+  },
+  {
+    "type": "mut",
     "named": false
   },
   {
